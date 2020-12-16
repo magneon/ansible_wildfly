@@ -1,0 +1,78 @@
+$script_pub_keys = <<-SCRIPT
+  echo "Copying the public key to authorized_keys"
+  cat /configs/answfykey.pub >> .ssh/authorized_keys
+  echo "Done"
+SCRIPT
+
+$script_pri_keys = <<-SCRIPT
+  echo "Copying the private key to Ansible machine"
+  cp /configs/answfykey .ssh/answfykey
+  echo "Done"
+
+  echo "Changing the owner of the private key"
+  chown vagrant:vagrant /home/vagrant/.ssh/answfykey
+  echo "Done"
+
+  echo "Updating the privileges"
+  chmod 600 /home/vagrant/.ssh/answfykey
+  echo "Done"
+SCRIPT
+
+$script_update_so = <<-SCRIPT
+  echo "Updating SO"
+  apt-get update >> updating_so.log
+  echo "Done"
+SCRIPT
+
+$script_python = <<-SCRIPT
+  echo "Installing Python"
+  apt-get install python -y >> installing_python.log
+  echo "Done"
+SCRIPT
+
+$script_ansible = <<-SCRIPT
+  echo "Installing Ansible"
+  apt-get install ansible -y >> installing_ansible.log
+  echo "Done"
+SCRIPT
+
+Vagrant.configure("2") do |config|
+
+  config.vm.define "ansible_wildfly" do |ansible_wildfly|
+    ansible_wildfly.vm.box = "ubuntu/bionic64"
+    ansible_wildfly.vm.provider "virtualbox" do |vb|
+      vb.name = "ansible_wildfly"
+      vb.cpus = 1
+      vb.memory = 512
+    end
+
+    ansible_wildfly.vm.network "forwarded_port", guest: 80, host: 8090
+    ansible_wildfly.vm.network "public_network", ip: "192.168.0.250"
+
+    ansible_wildfly.vm.synced_folder ".", "/vagrant", disabled: true
+    ansible_wildfly.vm.synced_folder "./configs", "/configs"
+
+    ansible_wildfly.vm.provision "shell", inline: $script_update_so
+    ansible_wildfly.vm.provision "shell", inline: $script_pri_keys
+    ansible_wildfly.vm.provision "shell", inline: $script_python
+    ansible_wildfly.vm.provision "shell", inline: $script_ansible
+  end
+
+  config.vm.define "application_server" do |application_server|
+    application_server.vm.box = "ubuntu/bionic64"
+    application_server.vm.provider "virtualbox" do |vb|
+      vb.name = "sftcbeappsrv001"
+      vb.cpus = 4
+      vb.memory = 2048
+    end
+
+    application_server.vm.network "public_network", ip: "192.168.0.251"
+    application_server.vm.synced_folder ".", "/vagrant", disabled: true
+    application_server.vm.synced_folder "./configs", "/configs"
+
+    application_server.vm.provision "shell", inline: $script_update_so
+    application_server.vm.provision "shell", inline: $script_pub_keys
+    application_server.vm.provision "shell", inline: $script_python
+  end
+
+end

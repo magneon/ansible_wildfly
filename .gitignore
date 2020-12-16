@@ -1,0 +1,16 @@
+# Vagrant files
+.vagrant
+answfykey
+
+# Common files
+*.log
+
+# Ansible files
+*.retry
+
+# IDE specific files
+.idea
+*.iml
+
+# Target folder
+/target
