@@ -38,41 +38,58 @@ SCRIPT
 
 Vagrant.configure("2") do |config|
 
-  config.vm.define "ansible_wildfly" do |ansible_wildfly|
-    ansible_wildfly.vm.box = "ubuntu/bionic64"
-    ansible_wildfly.vm.provider "virtualbox" do |vb|
-      vb.name = "ansible_wildfly"
+  config.vm.define "ansible" do |ansible|
+    ansible.vm.box = "ubuntu/bionic64"
+    ansible.vm.provider "virtualbox" do |vb|
+      vb.name = "ansible"
       vb.cpus = 1
       vb.memory = 512
     end
 
-    ansible_wildfly.vm.network "forwarded_port", guest: 80, host: 8090
-    ansible_wildfly.vm.network "public_network", ip: "192.168.0.250"
+    ansible.vm.network "forwarded_port", guest: 80, host: 8090
+    ansible.vm.network "public_network", ip: "192.168.0.250"
 
-    ansible_wildfly.vm.synced_folder ".", "/vagrant", disabled: true
-    ansible_wildfly.vm.synced_folder "./configs", "/configs"
+    ansible.vm.synced_folder ".", "/vagrant", disabled: true
+    ansible.vm.synced_folder "./configs", "/configs"
 
-    ansible_wildfly.vm.provision "shell", inline: $script_update_so
-    ansible_wildfly.vm.provision "shell", inline: $script_pri_keys
-    ansible_wildfly.vm.provision "shell", inline: $script_python
-    ansible_wildfly.vm.provision "shell", inline: $script_ansible
+    ansible.vm.provision "shell", inline: $script_update_so
+    ansible.vm.provision "shell", inline: $script_pri_keys
+    ansible.vm.provision "shell", inline: $script_python
+    ansible.vm.provision "shell", inline: $script_ansible
   end
 
-  config.vm.define "application_server" do |application_server|
-    application_server.vm.box = "ubuntu/bionic64"
-    application_server.vm.provider "virtualbox" do |vb|
+  config.vm.define "mysql_server" do |mysql_server|
+    mysql_server.vm.box = "ubuntu/bionic64"
+    mysql_server.vm.provider "virtualbox" do |vb|
+      vb.name = "sftcbedbsrv001"
+      vb.cpus = 4
+      vb.memory = 2048
+    end
+
+    mysql_server.vm.network "public_network", ip: "192.168.0.251"
+    mysql_server.vm.synced_folder ".", "/vagrant", disabled: true
+    mysql_server.vm.synced_folder "./configs", "/configs"
+
+    mysql_server.vm.provision "shell", inline: $script_update_so
+    mysql_server.vm.provision "shell", inline: $script_pub_keys
+    mysql_server.vm.provision "shell", inline: $script_python
+  end
+
+  config.vm.define "wildfly" do |wildfly|
+    wildfly.vm.box = "ubuntu/bionic64"
+    wildfly.vm.provider "virtualbox" do |vb|
       vb.name = "sftcbeappsrv001"
       vb.cpus = 4
       vb.memory = 2048
     end
 
-    application_server.vm.network "public_network", ip: "192.168.0.251"
-    application_server.vm.synced_folder ".", "/vagrant", disabled: true
-    application_server.vm.synced_folder "./configs", "/configs"
+    wildfly.vm.network "public_network", ip: "192.168.0.252"
+    wildfly.vm.synced_folder ".", "/vagrant", disabled: true
+    wildfly.vm.synced_folder "./configs", "/configs"
 
-    application_server.vm.provision "shell", inline: $script_update_so
-    application_server.vm.provision "shell", inline: $script_pub_keys
-    application_server.vm.provision "shell", inline: $script_python
+    wildfly.vm.provision "shell", inline: $script_update_so
+    wildfly.vm.provision "shell", inline: $script_pub_keys
+    wildfly.vm.provision "shell", inline: $script_python
   end
 
 end

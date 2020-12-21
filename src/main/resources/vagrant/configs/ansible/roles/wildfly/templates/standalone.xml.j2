@@ -162,11 +162,11 @@
                     </security>
                 </datasource>
                 <datasource jndi-name="java:jboss/datasources/SoftcubeDS" pool-name="SoftcubeDS" enabled="true" use-java-context="true" statistics-enabled="${wildfly.datasources.statistics-enabled:${wildfly.statistics-enabled:false}}">
-                    <connection-url>jdbc:mysql://192.168.0.251:3306/store</connection-url>
+                    <connection-url>jdbc:mysql://{{ db_host }}:3306/{{ db_name }}</connection-url>
                     <driver>mysql</driver>
                     <security>
-                        <user-name>softcube</user-name>
-                        <password>Brasil@77!</password>
+                        <user-name>{{ db_user }}</user-name>
+                        <password>{{ db_pass }}</password>
                     </security>
                 </datasource>
                 <drivers>
@@ -550,7 +550,7 @@
             </handlers>
         </subsystem>
         <subsystem xmlns="urn:jboss:domain:webservices:2.0" statistics-enabled="${wildfly.webservices.statistics-enabled:${wildfly.statistics-enabled:false}}">
-            <wsdl-host>${jboss.bind.address:0.0.0.0}</wsdl-host>
+            <wsdl-host>${jboss.bind.address:{{ wildfly_bind_address }}}</wsdl-host>
             <endpoint-config name="Standard-Endpoint-Config"/>
             <endpoint-config name="Recording-Endpoint-Config">
                 <pre-handler-chain name="recording-handlers" protocol-bindings="##SOAP11_HTTP ##SOAP11_HTTP_MTOM ##SOAP12_HTTP ##SOAP12_HTTP_MTOM">
@@ -563,13 +563,13 @@
     </profile>
     <interfaces>
         <interface name="management">
-            <inet-address value="${jboss.bind.address.management:0.0.0.0}"/>
+            <inet-address value="${jboss.bind.address.management:{{ wildfly_bind_address }}}"/>
         </interface>
         <interface name="public">
-            <inet-address value="${jboss.bind.address:0.0.0.0}"/>
+            <inet-address value="${jboss.bind.address:{{ wildfly_bind_address }}}"/>
         </interface>
         <interface name="unsecure">
-            <inet-address value="${jboss.bind.address.unsecure:0.0.0.0}"/>
+            <inet-address value="${jboss.bind.address.unsecure:{{ wildfly_bind_address }}}"/>
         </interface>
     </interfaces>
     <socket-binding-group name="standard-sockets" default-interface="public" port-offset="${jboss.socket.binding.port-offset:0}">

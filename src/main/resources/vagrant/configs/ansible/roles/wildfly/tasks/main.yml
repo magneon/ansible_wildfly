@@ -1,0 +1,86 @@
+---
+- name: 'Downloading and Installing Open JDK 11'
+  apt:
+    name: openjdk-11-jdk
+    state: present
+  become: yes
+
+- name: 'Downloading Wildfly 17.0.1.Final'
+  get_url:
+    url: https://download.jboss.org/wildfly/17.0.1.Final/wildfly-17.0.1.Final.tar.gz
+    dest: /tmp/wildfly-17.0.1.Final.tar.gz
+
+- name: 'Extracting Wildfly 17.0.1.Final'
+  unarchive:
+    src: /tmp/wildfly-17.0.1.Final.tar.gz
+    dest: /bin/
+    remote_src: yes
+    owner: root
+    group: root
+    mode: 0744
+  become: yes
+
+- name: 'Removing Wildfly 17.0.1.Final directory'
+  file:
+    path: /bin/wildfly
+    state: absent
+  become: yes
+
+- name: 'Renaming the Wildfly 17.0.1.Final directory'
+  command: "mv /bin/wildfly-17.0.1.Final {{ wildfly_install_dir }}"
+  become: yes
+
+- name: 'Configuring Wildfly 17.0.1.Final'
+  template:
+    src: roles/wildfly/templates/standalone.xml.j2
+    dest: "{{ wildfly_install_dir }}/standalone/configuration/standalone.xml"
+  become: yes
+
+- name: 'Creating MySQL 5.7 module folder at Wildfly 17.0.1.Final'
+  file:
+    path: "{{ wildfly_install_dir }}/modules/system/layers/base/com/mysql/main"
+    state: directory
+  become: yes
+
+- name: 'Providing MySQL 5.7 module to Wildfly 17.0.1.Final'
+  copy:
+    src: roles/wildfly/files/modules/mysql57-module/module.xml
+    dest: "{{ wildfly_install_dir }}/modules/system/layers/base/com/mysql/main/"
+    owner: root
+    group: root
+    mode: 0744
+  become: yes
+
+- name: 'Providing MySQL 5.7 Java Connector to Wildfly 17.0.1.Final'
+  copy:
+    src: roles/wildfly/files/modules/mysql57-module/mysql-connector-java-5.1.47.jar
+    dest: "{{ wildfly_install_dir }}/modules/system/layers/base/com/mysql/main/mysql-connector-java-5.1.47.jar"
+    owner: root
+    group: root
+    mode: 0744
+  become: yes
+
+- name: 'Creating Wildfly 17.0.1.Final initialization script'
+  copy:
+    src: roles/wildfly/files/wildfly.sh
+    dest: /bin
+  become: yes
+
+- name: 'Configuring Wildfly 17.0.1.Final as a service'
+  copy:
+    src: roles/wildfly/files/wildfly.service
+    dest: /etc/systemd/system/wildfly.service
+    owner: root
+    group: root
+    mode: 0744
+  become: yes
+
+- name: 'Reloading Linux Daemon'
+  shell: systemctl daemon-reload
+  become: yes
+  notify:
+    - restart wildfly
+
+- name: 'Creating Wildfly 17.0.1.Final Administrator User'
+  shell: "sh {{ wildfly_install_dir }}/bin/add-user.sh -u softcube-admin -p Brasil@77! -s -e"
+  become: yes
